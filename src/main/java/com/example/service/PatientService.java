@@ -17,12 +17,11 @@ public class PatientService {
 
     private final PatientRepository patientRepository;
 
-
     public PatientDTO findPatientByPhoneNumber(String phoneNumber) {
         String raw = phoneNumber == null ? "" : phoneNumber.trim();
         String normalized = normalizePhonePl(raw);
 
-        log.debug("Szukam pacjenta. raw='{}', normalized='{}'", mask(raw), mask(normalized));
+        log.debug("Searching patient. raw='{}', normalized='{}'", raw, normalized);
 
         Patient patient = patientRepository.findByPhoneNumber(normalized)
                 .orElseGet(() -> patientRepository.findByPhoneNumber(raw)
@@ -35,9 +34,11 @@ public class PatientService {
                 patient.getPhoneNumber()
         );
     }
+
     private String normalizePhonePl(String input) {
         if (input == null || input.isBlank()) return "";
         String digits = input.replaceAll("\\D+", "");
+        if (digits.isBlank()) return "";
 
         if (digits.startsWith("0048") && digits.length() == 13) {
             return "+" + digits.substring(2);
@@ -54,13 +55,7 @@ public class PatientService {
         if (digits.startsWith("00") && digits.length() > 2) {
             return "+" + digits.substring(2);
         }
-        String onlyDigits = digits;
-        return input.startsWith("+") ? input : "+" + onlyDigits;
+        return "+" + digits;
     }
 
-    private String mask(String value) {
-        if (value == null || value.isBlank()) return "";
-        int n = Math.max(0, value.length() - 4);
-        return "*".repeat(n) + value.substring(value.length() - 4);
-    }
 }
